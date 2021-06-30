@@ -57,8 +57,13 @@ FS::create(std::string filepath)
 {
     std::cout << "FS::create(" << filepath << ")\n";
 
-    int firstFreeblock;
+    if(filepath == NULL || strlen(filepath) > 56)
+    {
+        return -1
+    }
 
+
+    int firstFreeblock;
     for(unsigned int i = 1; i < TABLE_SIZE; i++)
     {
         if(FAT_filesystem[i].type = TYPE_FREE)
@@ -73,6 +78,8 @@ FS::create(std::string filepath)
     // size
     // access_rights
 
+    writeFAT();
+    writeFAT_file();
 
     return 0;
 }
@@ -90,6 +97,14 @@ int
 FS::ls()
 {
     std::cout << "FS::ls()\n";
+
+    int i;
+    for(i = 0; i < TABLE_SIZE; i++)
+    {
+        std::cout << FAT_filesystem[i].file_name << std::endl;
+        std::cout << "\n" << std::endl;
+    }
+
     return 0;
 }
 
