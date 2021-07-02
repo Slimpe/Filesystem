@@ -26,9 +26,11 @@ FS::format()
     FAT_filesystem[0].first_blk = ROOT_BLOCK;
     FAT_filesystem[0].type = TYPE_FREE;
 
+    // set all indexes except 0 and 1 as free
     for(unsigned int i = 2; i < TABLE_SIZE; i++){
         fat[i] = FAT_FREE;
     };
+    // set all indexes except 0 as free
     for(unsigned int i = 1; i < TABLE_SIZE; i++){
         FAT_filesystem[i].type = TYPE_FREE;
     };
@@ -57,26 +59,25 @@ FS::create(std::string filepath)
 {
     std::cout << "FS::create(" << filepath << ")\n";
 
-    if(filepath == NULL || strlen(filepath) > 56)
-    {
-        return -1
-    }
-
-
-    int firstFreeblock;
-    for(unsigned int i = 1; i < TABLE_SIZE; i++)
-    {
-        if(FAT_filesystem[i].type = TYPE_FREE)
-        {
-            return firstFreeblock = i;
+    // search for a free slot in FAT
+    int firstFreeFat;
+    for(int i = 2; i < TABLE_SIZE; i++) {
+        if(fat[i] == FAT_FREE) {
+            // check size of file to see if more blocks needed (later)
+            fat[i] = FAT_EOF;
+            return firstFreeFat = i;
         }
     }
 
-    FAT_filesystem[firstFreeblock].file_name = filepath;
-    FAT_filesystem[firstFreeblock].first_block = firstFreeblock;
-    FAT_filesystem[firstFreeblock].type = TYPE_FILE;
-    // size
-    // access_rights
+    for(int j = 0; j < FILESYSTEM_SIZE; j++) {
+        if(FAT_filesystem[j].type == TYPE_FREE) {
+            FAT_filesystem[j].first_blk = firstFreeFat;
+            // FAT_filesystem[j].size =
+            FAT_filesystem[j].type = TYPE_FILE;
+            //FAT_filesystem[j].access_rights =
+        }
+    }
+
 
     writeFAT();
     writeFAT_file();
@@ -89,6 +90,17 @@ int
 FS::cat(std::string filepath)
 {
     std::cout << "FS::cat(" << filepath << ")\n";
+
+    for(int i = 0; i < FILESYSTEM_SIZE; i++) {
+        
+        if(FAT_filesystem[i].file_name == filepath) {
+            // open file
+            // read lines
+            // std::out to terminal
+            
+        }
+    }
+
     return 0;
 }
 

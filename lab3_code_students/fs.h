@@ -18,7 +18,12 @@
 
 //EGNA
 #define TYPE_FREE 2
+
+// size of fat
 #define TABLE_SIZE (BLOCK_SIZE/2)
+
+// size of FAT_filesystem
+#define FILESYSTEM_SIZE (BLOCK_SIZE/sizeof(dir_entry) + 1)
 
 
 class FS {
@@ -32,6 +37,7 @@ private:
     };
 
     Disk disk;
+    
     // size of a FAT entry is 2 bytes
     int16_t fat[TABLE_SIZE];
     
