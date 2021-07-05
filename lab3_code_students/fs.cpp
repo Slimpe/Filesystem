@@ -1,10 +1,11 @@
 #include <iostream>
 #include "fs.h"
+#include <vector>
 
 FS::FS()
 {
     std::cout << "FS::FS()... Creating file system\n";
-    disk.read(ROOT_BLOCK, (uint8_t*) FAT_filesystem);
+    disk.read(ROOT_BLOCK, (uint8_t*) directory_table);
     disk.read(FAT_BLOCK, (uint8_t*) fat);
 }
 
@@ -23,20 +24,33 @@ FS::format()
     fat[0] = FAT_EOF;
     fat[1] = FAT_EOF;
 
-    FAT_filesystem[0].first_blk = ROOT_BLOCK;
-    FAT_filesystem[0].type = TYPE_FREE;
+    directory_table[0].first_blk = ROOT_BLOCK;
+    directory_table[0].type = TYPE_FREE;
 
     // set all indexes except 0 and 1 as free
     for(unsigned int i = 2; i < TABLE_SIZE; i++){
         fat[i] = FAT_FREE;
     };
     // set all indexes except 0 as free
-    for(unsigned int i = 1; i < TABLE_SIZE; i++){
-        FAT_filesystem[i].type = TYPE_FREE;
+    for(unsigned int i = 1; i < FILESYSTEM_SIZE; i++){
+        directory_table[i].type = TYPE_FREE;
     };
 
     writeFAT();
-    writeFAT_file();
+    writeFAT_directory();
+
+    // std::cout << "\nFAT : " << std::endl;
+    // for(unsigned int i = 0; i < 10; i++){
+    //     std::cout << fat[i] << std::endl;
+    // };
+    // std::cout << "\n" << std::endl;
+    // std::cout << "DIRECTORY : " << std::endl;
+    // std::cout << directory_table[0].first_blk << std::endl;
+    // std::cout << unsigned(directory_table[0].type) << std::endl;
+
+    // for(int i = 0; i < 10; i++){
+    //    std::cout << unsigned(directory_table[i].type) << std::endl;
+    // };
 
     return 0;
 }
@@ -47,9 +61,9 @@ FS::writeFAT()
     disk.write(FAT_BLOCK, (uint8_t*) fat);
 }
 void
-FS::writeFAT_file()
+FS::writeFAT_directory()
 {
-    disk.write(ROOT_BLOCK, (uint8_t*) FAT_filesystem);
+    disk.write(ROOT_BLOCK, (uint8_t*) directory_table);
 }
 
 // create <filepath> creates a new file on the disk, the data content is
@@ -59,28 +73,48 @@ FS::create(std::string filepath)
 {
     std::cout << "FS::create(" << filepath << ")\n";
 
-    // search for a free slot in FAT
-    int firstFreeFat;
-    for(int i = 2; i < TABLE_SIZE; i++) {
-        if(fat[i] == FAT_FREE) {
-            // check size of file to see if more blocks needed (later)
-            fat[i] = FAT_EOF;
-            return firstFreeFat = i;
-        }
-    }
+    // input reads up to, but not including, the first whitespace!!!!
+    std::string input; // hello world
+    std::string empty_line;
 
-    for(int j = 0; j < FILESYSTEM_SIZE; j++) {
-        if(FAT_filesystem[j].type == TYPE_FREE) {
-            FAT_filesystem[j].first_blk = firstFreeFat;
-            // FAT_filesystem[j].size =
-            FAT_filesystem[j].type = TYPE_FILE;
-            //FAT_filesystem[j].access_rights =
-        }
-    }
+    // std::cin >> input;
+    //empty_line = "\n";
+    std::vector<std::string> vec;
 
+    bool flag = true;
+    while(flag){
+        
+        //search for a free slot in FAT
+        int firstFreeFat;
+        for(int i = 2; i < TABLE_SIZE; i++) {
+            if(fat[i] == FAT_FREE) {
+                // check size of file to see if more blocks needed (later)
+                fat[i] = FAT_EOF;
+                return firstFreeFat = i;
+            }
+        }
+
+        for(int j = 0; j < FILESYSTEM_SIZE; j++) {
+            if(directory_table[j].type == TYPE_FREE) {
+                directory_table[j].first_blk = firstFreeFat;
+                directory_table[j].size = sizeof(input);
+                directory_table[j].type = TYPE_FILE;
+                directory_table[j].access_rights = READ;
+            }
+            break;
+        }
+        
+        // read content of the file
+        std::cin >> input;
+
+        while(input != "") {
+            vec.push_back(input);
+        }
+        flag = false;
+    }
 
     writeFAT();
-    writeFAT_file();
+    writeFAT_directory();
 
     return 0;
 }
@@ -93,7 +127,7 @@ FS::cat(std::string filepath)
 
     for(int i = 0; i < FILESYSTEM_SIZE; i++) {
         
-        if(FAT_filesystem[i].file_name == filepath) {
+        if(directory_table[i].file_name == filepath) {
             // open file
             // read lines
             // std::out to terminal
@@ -113,7 +147,7 @@ FS::ls()
     int i;
     for(i = 0; i < TABLE_SIZE; i++)
     {
-        std::cout << FAT_filesystem[i].file_name << std::endl;
+        std::cout << directory_table[i].file_name << std::endl;
         std::cout << "\n" << std::endl;
     }
 

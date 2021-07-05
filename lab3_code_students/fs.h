@@ -22,18 +22,18 @@
 // size of fat
 #define TABLE_SIZE (BLOCK_SIZE/2)
 
-// size of FAT_filesystem
+// size of directory_table
 #define FILESYSTEM_SIZE (BLOCK_SIZE/sizeof(dir_entry) + 1)
 
 
 class FS {
 private:
     struct dir_entry {
-        char file_name[56]; // name of the file / sub-directory
-        uint16_t first_blk; // index in the FAT for the first block of the file
-        uint32_t size; // size of the file in bytes
-        uint8_t type; // directory (1) or file (0) or free (2)
-        uint8_t access_rights; // read (0x04), write (0x02), execute (0x01)
+        char file_name[56]; // name of the file / sub-directory | axel
+        uint16_t first_blk; // index in the FAT for the first block of the file | 2
+        uint32_t size; // size of the file in bytes | size_of(input)
+        uint8_t type; // directory (1) or file (0) or free (2) | 0
+        uint8_t access_rights; // read (0x04), write (0x02), execute (0x01) | ?
     };
 
     Disk disk;
@@ -41,7 +41,7 @@ private:
     // size of a FAT entry is 2 bytes
     int16_t fat[TABLE_SIZE];
     
-    dir_entry FAT_filesystem[BLOCK_SIZE/sizeof(dir_entry) + 1];
+    dir_entry directory_table[BLOCK_SIZE/sizeof(dir_entry) + 1];
 
 public:
     FS();
@@ -82,7 +82,7 @@ public:
     int chmod(std::string accessrights, std::string filepath);
 
     void writeFAT();
-    void writeFAT_file();
+    void writeFAT_directory();
     
 
 };
