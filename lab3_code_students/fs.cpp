@@ -1,6 +1,7 @@
 #include <iostream>
 #include "fs.h"
 #include <vector>
+#include <cstring>
 
 FS::FS()
 {
@@ -71,50 +72,48 @@ FS::writeFAT_directory()
 int
 FS::create(std::string filepath)
 {
-    std::cout << "FS::create(" << filepath << ")\n";
-
     // input reads up to, but not including, the first whitespace!!!!
     std::string input; // hello world
     std::string empty_line;
 
-    // std::cin >> input;
-    //empty_line = "\n";
     std::vector<std::string> vec;
 
-    bool flag = true;
-    while(flag){
-        
-        //search for a free slot in FAT
-        int firstFreeFat;
-        for(int i = 2; i < TABLE_SIZE; i++) {
-            if(fat[i] == FAT_FREE) {
-                // check size of file to see if more blocks needed (later)
-                fat[i] = FAT_EOF;
-                return firstFreeFat = i;
-            }
-        }
+    while(std::getline(std::cin, input)) {
 
-        for(int j = 0; j < FILESYSTEM_SIZE; j++) {
-            if(directory_table[j].type == TYPE_FREE) {
-                directory_table[j].first_blk = firstFreeFat;
-                directory_table[j].size = sizeof(input);
-                directory_table[j].type = TYPE_FILE;
-                directory_table[j].access_rights = READ;
-            }
+        if(input == "") {
             break;
         }
-        
-        // read content of the file
-        std::cin >> input;
-
-        while(input != "") {
-            vec.push_back(input);
+        vec.push_back(input);
+    }
+    
+    //search for a free slot in FAT
+    int firstFreeFat;
+    for(int i = 2; i < TABLE_SIZE; i++) {
+        if(fat[i] == FAT_FREE) {
+            // check size of file to see if more blocks needed (later)
+            fat[i] = FAT_EOF;
+            firstFreeFat = i;
         }
-        flag = false;
+        break;
     }
 
+    for(int j = 0; j < FILESYSTEM_SIZE; j++) {
+
+        if(directory_table[j].type == TYPE_FREE) 
+        {
+            directory_table[j].first_blk = firstFreeFat;
+            strcpy(directory_table[j].file_name, filepath.c_str());
+            // size of what 
+            directory_table[j].size = sizeof(vec);
+            directory_table[j].type = TYPE_FILE;
+            //directory_table[j].access_rights = READ;
+        }
+        break;
+    }
     writeFAT();
     writeFAT_directory();
+
+    std::cout << "FS::create(" << filepath << ")\n";
 
     return 0;
 }
@@ -128,7 +127,7 @@ FS::cat(std::string filepath)
     for(int i = 0; i < FILESYSTEM_SIZE; i++) {
         
         if(directory_table[i].file_name == filepath) {
-            // open file
+            disk.read(directory_table[i].first_blk,)
             // read lines
             // std::out to terminal
             
@@ -142,17 +141,28 @@ FS::cat(std::string filepath)
 int
 FS::ls()
 {
-    std::cout << "FS::ls()\n";
-
     int i;
-    for(i = 0; i < TABLE_SIZE; i++)
+    for(i = 0; i < FILESYSTEM_SIZE; i++)
     {
-        std::cout << directory_table[i].file_name << std::endl;
-        std::cout << "\n" << std::endl;
+        if(directory_table[i].type != TYPE_FREE) {
+            std::cout << directory_table[i].file_name << std::endl;
+            std::cout << "\n" << std::endl;
+        }
     }
+
+    std::cout << "FS::ls()\n";
 
     return 0;
 }
+
+// ##########
+
+// Vi kanske måste göra en funktion som splittar upp filepathsen för att
+// underlätta att hitta rätt beroende hur långa de är.
+
+// bara en fundering
+
+// ##########
 
 // cp <sourcefilepath> <destfilepath> makes an exact copy of the file
 // <sourcefilepath> to a new file <destfilepath>
@@ -172,10 +182,18 @@ FS::mv(std::string sourcepath, std::string destpath)
     return 0;
 }
 
-// rm <filepath> removes / deletes the file <filepath>
+// rm <filepath> removes / deletes the file <filepath> --- kan göras
 int
 FS::rm(std::string filepath)
 {
+    // 
+
+    for(int j = 0; j < FILESYSTEM_SIZE; i++) {
+        if(directory_table[j].file_name == filepath) {
+
+        }
+    }
+
     std::cout << "FS::rm(" << filepath << ")\n";
     return 0;
 }
@@ -190,7 +208,7 @@ FS::append(std::string filepath1, std::string filepath2)
 }
 
 // mkdir <dirpath> creates a new sub-directory with the name <dirpath>
-// in the current directory
+// in the current directory ---- kan göras
 int
 FS::mkdir(std::string dirpath)
 {
@@ -198,7 +216,7 @@ FS::mkdir(std::string dirpath)
     return 0;
 }
 
-// cd <dirpath> changes the current (working) directory to the directory named <dirpath>
+// cd <dirpath> changes the current (working) directory to the directory named <dirpath> -- kan göras
 int
 FS::cd(std::string dirpath)
 {
@@ -207,7 +225,7 @@ FS::cd(std::string dirpath)
 }
 
 // pwd prints the full path, i.e., from the root directory, to the current
-// directory, including the currect directory name
+// directory, including the currect directory name --- kan göras
 int
 FS::pwd()
 {
@@ -216,7 +234,7 @@ FS::pwd()
 }
 
 // chmod <accessrights> <filepath> changes the access rights for the
-// file <filepath> to <accessrights>.
+// file <filepath> to <accessrights>. -- kan göras
 int
 FS::chmod(std::string accessrights, std::string filepath)
 {
