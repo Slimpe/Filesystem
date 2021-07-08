@@ -16,7 +16,7 @@
 #define WRITE 0x02
 #define EXECUTE 0x01
 
-//EGNA
+// EGNA
 #define TYPE_FREE 2
 
 // size of fat
@@ -38,9 +38,10 @@ private:
 
     Disk disk;
     
-    // size of a FAT entry is 2 bytes
+    // size of a FAT entry is 2 bytes (?)
     int16_t fat[TABLE_SIZE];
     
+    // table of information of files
     dir_entry directory_table[BLOCK_SIZE/sizeof(dir_entry) + 1];
 
 public:
@@ -81,8 +82,10 @@ public:
     // file <filepath> to <accessrights>.
     int chmod(std::string accessrights, std::string filepath);
 
+    // Our own helpfunctions
     void writeFAT();
     void writeFAT_directory();
+    std::string retrieveFilename(std::string filepath);
     
 
 };

@@ -67,23 +67,25 @@ FS::writeFAT_directory()
     disk.write(ROOT_BLOCK, (uint8_t*) directory_table);
 }
 
+std::string FS::retrieveFilename(std::string filepath) {
+    
+}
+
 // create <filepath> creates a new file on the disk, the data content is
 // written on the following rows (ended with an empty row)
 int
 FS::create(std::string filepath)
 {
     // input reads up to, but not including, the first whitespace!!!!
-    std::string input; // hello world
-    std::string empty_line;
-
-    std::vector<std::string> vec;
+    std::string content;
+    std::string input;
 
     while(std::getline(std::cin, input)) {
 
         if(input == "") {
             break;
         }
-        vec.push_back(input);
+
     }
     
     //search for a free slot in FAT
@@ -103,9 +105,12 @@ FS::create(std::string filepath)
         {
             directory_table[j].first_blk = firstFreeFat;
             strcpy(directory_table[j].file_name, filepath.c_str());
-            // size of what 
-            directory_table[j].size = sizeof(vec);
+
+            // size of what -- depending on where you store content
+            directory_table[j].size = sizeof(content);
+
             directory_table[j].type = TYPE_FILE;
+
             //directory_table[j].access_rights = READ;
         }
         break;
@@ -122,17 +127,25 @@ FS::create(std::string filepath)
 int
 FS::cat(std::string filepath)
 {
-    std::cout << "FS::cat(" << filepath << ")\n";
-
     for(int i = 0; i < FILESYSTEM_SIZE; i++) {
         
+        // måste skapa en hjälpfunktion för att hantera långa filepaths!!!
+        // måste även titta om filen sträcker sig över flera block
+        std::string content;
+
         if(directory_table[i].file_name == filepath) {
-            disk.read(directory_table[i].first_blk,)
-            // read lines
-            // std::out to terminal
+
+            disk.read(directory_table[i].first_blk, (uint8_t*) &content);
             
+            if(content.empty()) {
+                return -1;
+            }
+            std::cout << content;
         }
+        break;
     }
+
+    std::cout << "FS::cat(" << filepath << ")\n";
 
     return 0;
 }
