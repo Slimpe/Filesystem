@@ -56,6 +56,8 @@ FS::format()
     return 0;
 }
 
+// #### EGNA ####
+
 void
 FS::writeFAT()
 {
@@ -67,9 +69,49 @@ FS::writeFAT_directory()
     disk.write(ROOT_BLOCK, (uint8_t*) directory_table);
 }
 
-std::string FS::retrieveFilename(std::string filepath) {
-    
+void
+FS::writeContentToDisk(unsigned block, std::string content){
+
+    disk.write(block, (uint8_t*) &content);
 }
+
+int
+FS::findFirstFreeFatSlot()
+{
+    int firstFree;
+    for(int i = 0; i < TABLE_SIZE; i++)
+    {
+        if(fat[i] == FAT_FREE) {
+            // check size of file to see if more blocks needed (later)
+            fat[i] = FAT_EOF;
+            return firstFree = i;
+        }
+    }
+}
+
+// retrieves the file from a path, "mainDir/subDir/file33" --> returns "file33"
+std::string FS::retrieveFilename(std::string path) {
+    int pos = path.find_last_of('/');
+
+    if(pos != -1) { // check to see if there are any subfolders
+        return path.substr(pos+1, path.size());
+    }
+    // otherwise the path is just the filename, return path
+    return path;
+}
+
+// retrieves and returns first_blk in directory_table
+uint16_t FS::findBlock(std::string filepath) {
+    for(int i = 0; i < FILESYSTEM_SIZE; i++) {
+        if(directory_table[i].file_name == filepath) {
+            return directory_table[i].first_blk;
+        }
+        else
+            return -1;
+    }
+}
+
+// #########
 
 // create <filepath> creates a new file on the disk, the data content is
 // written on the following rows (ended with an empty row)
@@ -79,44 +121,46 @@ FS::create(std::string filepath)
     // input reads up to, but not including, the first whitespace!!!!
     std::string content;
     std::string input;
+    //char content[BLOCK_SIZE];
+    content.clear();
 
     while(std::getline(std::cin, input)) {
 
         if(input == "") {
+            content += '\0'; // null character at the end of the string
             break;
         }
-
+        content += input;
+        content += '\n';
     }
     
     //search for a free slot in FAT
-    int firstFreeFat;
-    for(int i = 2; i < TABLE_SIZE; i++) {
-        if(fat[i] == FAT_FREE) {
-            // check size of file to see if more blocks needed (later)
-            fat[i] = FAT_EOF;
-            firstFreeFat = i;
-        }
-        break;
-    }
+    int firstFreeFat = findFirstFreeFatSlot();
 
+    // search for a free slot in directory_table
     for(int j = 0; j < FILESYSTEM_SIZE; j++) {
 
         if(directory_table[j].type == TYPE_FREE) 
         {
             directory_table[j].first_blk = firstFreeFat;
+
+            // check if name is valid
+            if(sizeof(filepath) > 56) {
+                std::cout << "FS::create failed, name too long." << std::endl;
+                return -1;
+            }
+            
             strcpy(directory_table[j].file_name, filepath.c_str());
-
-            // size of what -- depending on where you store content
-            directory_table[j].size = sizeof(content);
-
+            
+            directory_table[j].size = content.size();
             directory_table[j].type = TYPE_FILE;
-
-            //directory_table[j].access_rights = READ;
+            directory_table[j].access_rights = READ;
+            break;
         }
-        break;
     }
     writeFAT();
     writeFAT_directory();
+    writeContentToDisk(firstFreeFat, content);
 
     std::cout << "FS::create(" << filepath << ")\n";
 
@@ -127,24 +171,25 @@ FS::create(std::string filepath)
 int
 FS::cat(std::string filepath)
 {
-    for(int i = 0; i < FILESYSTEM_SIZE; i++) {
-        
-        // måste skapa en hjälpfunktion för att hantera långa filepaths!!!
-        // måste även titta om filen sträcker sig över flera block
-        std::string content;
+    // måste även titta om filen sträcker sig över flera block
+    std::string content;
+    content.clear();
+    std::string name = retrieveFilename(filepath);
+    std::cout << name << std::endl; // axel
+    uint16_t block = findBlock(name);
+    std::cout << block << std::endl; // 2
 
-        if(directory_table[i].file_name == filepath) {
-
-            disk.read(directory_table[i].first_blk, (uint8_t*) &content);
-            
-            if(content.empty()) {
-                return -1;
-            }
-            std::cout << content;
-        }
-        break;
+    // read from disk
+    disk.read(block, (uint8_t*) &content);
+    
+    if(content.empty()) {
+        return -1;
     }
-
+    
+    // vi kommer hit sen segfault <3
+    std::string s(reinterpret_cast<uint8_t*>(content));
+    std::cout << s << std::endl;
+    
     std::cout << "FS::cat(" << filepath << ")\n";
 
     return 0;
@@ -159,7 +204,7 @@ FS::ls()
     {
         if(directory_table[i].type != TYPE_FREE) {
             std::cout << directory_table[i].file_name << std::endl;
-            std::cout << "\n" << std::endl;
+            //std::cout << "\n" << std::endl;
         }
     }
 
@@ -201,7 +246,7 @@ FS::rm(std::string filepath)
 {
     // 
 
-    for(int j = 0; j < FILESYSTEM_SIZE; i++) {
+    for(int j = 0; j < FILESYSTEM_SIZE; j++) {
         if(directory_table[j].file_name == filepath) {
 
         }

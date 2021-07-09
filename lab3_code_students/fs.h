@@ -85,7 +85,10 @@ public:
     // Our own helpfunctions
     void writeFAT();
     void writeFAT_directory();
-    std::string retrieveFilename(std::string filepath);
+    std::string retrieveFilename(std::string path);
+    uint16_t findBlock(std::string filepath);
+    void writeContentToDisk(unsigned block, std::string content);
+    int findFirstFreeFatSlot();
     
 
 };
