@@ -79,7 +79,7 @@ int
 FS::findFirstFreeFatSlot()
 {
     int firstFree;
-    for(int i = 0; i < TABLE_SIZE; i++)
+    for(int i = 2; i < TABLE_SIZE; i++)
     {
         if(fat[i] == FAT_FREE) {
             // check size of file to see if more blocks needed (later)
@@ -102,12 +102,11 @@ std::string FS::retrieveFilename(std::string path) {
 
 // retrieves and returns first_blk in directory_table
 uint16_t FS::findBlock(std::string filepath) {
+
     for(int i = 0; i < FILESYSTEM_SIZE; i++) {
         if(directory_table[i].file_name == filepath) {
             return directory_table[i].first_blk;
         }
-        else
-            return -1;
     }
 }
 
@@ -118,6 +117,8 @@ uint16_t FS::findBlock(std::string filepath) {
 int
 FS::create(std::string filepath)
 {
+    std::cout << "FS::create(" << filepath << ")\n";
+
     // input reads up to, but not including, the first whitespace!!!!
     std::string content;
     std::string input;
@@ -160,9 +161,8 @@ FS::create(std::string filepath)
     }
     writeFAT();
     writeFAT_directory();
+    std::cout << firstFreeFat << std::endl;
     writeContentToDisk(firstFreeFat, content);
-
-    std::cout << "FS::create(" << filepath << ")\n";
 
     return 0;
 }
@@ -171,6 +171,8 @@ FS::create(std::string filepath)
 int
 FS::cat(std::string filepath)
 {
+    std::cout << "FS::cat(" << filepath << ")\n";
+
     // måste även titta om filen sträcker sig över flera block
     std::string content;
     content.clear();
@@ -179,19 +181,34 @@ FS::cat(std::string filepath)
     uint16_t block = findBlock(name);
     std::cout << block << std::endl; // 2
 
-    // read from disk
-    disk.read(block, (uint8_t*) &content);
-    
-    if(content.empty()) {
-        return -1;
-    }
-    
-    // vi kommer hit sen segfault <3
-    std::string s(reinterpret_cast<uint8_t*>(content));
-    std::cout << s << std::endl;
-    
-    std::cout << "FS::cat(" << filepath << ")\n";
+    char emptyBlock[BLOCK_SIZE];
 
+    uint8_t* temp = reinterpret_cast<uint8_t*>(&emptyBlock);
+
+    // måste även titta om access rights är READ
+    // read from disk
+    //disk.read(block, (uint8_t*)&content);
+    disk.read(block, temp);
+
+    // uint32_t test;
+    // for(int i = 0; i < FILESYSTEM_SIZE; i++) {
+    //     if(directory_table[i].file_name == filepath) {
+    //         test = directory_table[i].size;
+    //     }
+    // }
+
+    int j = 0;
+    while(j < BLOCK_SIZE) {
+        content += emptyBlock[j];
+        j++;
+    }
+
+    std::cout << content;
+
+    // if(temp.empty()) {
+    //     return -1;
+    // }
+    
     return 0;
 }
 
