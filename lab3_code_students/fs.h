@@ -87,8 +87,12 @@ public:
     void writeFAT_directory();
     std::string retrieveFilename(std::string path);
     uint16_t findBlock(std::string filepath);
-    void writeContentToDisk(unsigned block, std::string content);
-    int findFirstFreeFatSlot();
+    void writeContentToDisk(unsigned block, uint8_t* content);
+    int findFirstFreeFatSlot(int numOfBlocks = 1);
+    dir_entry* readFromDirectory(int block = 0);
+    // dir_entry* writeToDirectory();
+    bool accessCheck(int accessRight, int operation);
+    int createFileInDirectoryTable(std::string filepath, std::string content, uint8_t *tempBlock);
     
 
 };
