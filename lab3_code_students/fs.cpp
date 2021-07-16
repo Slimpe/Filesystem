@@ -152,7 +152,8 @@ FS::createFileInDirectoryTable(std::string filepath, std::string content, uint8_
                 writeFAT();
                 writeFAT_directory();
                 writeContentToDisk(firstFreeFat, tempBlock);
-
+                break;
+                //i donno anymore... :d
             }
         }
     
