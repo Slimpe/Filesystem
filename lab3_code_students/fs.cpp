@@ -69,32 +69,12 @@ FS::writeFAT_directory()
     disk.write(ROOT_BLOCK, (uint8_t*) directory_table);
 }
 
-<<<<<<< Updated upstream
 void
 FS::writeContentToDisk(unsigned block, std::string content){
 
     disk.write(block, (uint8_t*) &content);
-=======
-bool accessCheck(int accessRight, int operation) {
-    bool ret = false;
-
-    if(accessRight % 2 == 1 && operation == 1) { // EXECUTE
-        ret = true;
-    }
-    else if(accessRight % 2 == 0 && accessRight != 4 && operation == 2) { // WRITE
-        ret = true;
-    }
-    else if(accessRight >= 4 && operation == 4) { // READ
-        ret = true;
-    }
-    else if(accessRight == 7) { // ALL RIGHTS
-        ret = true;
-    }
-    return ret;
->>>>>>> Stashed changes
 }
 
-// dunno if this function is nessecary
 int
 FS::findFirstFreeFatSlot()
 {
@@ -109,120 +89,6 @@ FS::findFirstFreeFatSlot()
     }
 }
 
-<<<<<<< Updated upstream
-=======
-int
-FS::writeContentToDisk(std::string filepath, std::string content, uint8_t *tempBlock)
-{
-    int numOfBlocks = (content.size() / BLOCK_SIZE) + 1;
-    int previousBlock = 0;
-    int blocksCreated = 0;
-    int firstBlock = 0;
-
-    for(int i = 2; i < TABLE_SIZE; i++) {
-        if(fat[i] == FAT_FREE)
-            if(blocksCreated == 0)
-                firstBlock = i;
-                if(numOfBlocks == 1) { // first block to be created
-                    fat[i] == FAT_EOF;
-                    break;
-                }
-            else if(blocksCreated < numOfBlocks - 1) // check if not last block to be created
-                fat[previousBlock] = i;
-            else    // last block to be created
-                fat[previousBlock] = i;
-                fat[i] = FAT_EOF;
-                break;
-
-            previousBlock = i;
-            blocksCreated++;
-    }
-
-    // SIMONS VERSION
-    // while( something ) 
-    // {
-    //     int firstFreeFat = findFirstFreeFatSlot();
-    //     int sizeOfContent = content.size();
-
-    //     for(int i = 0; i < FILESYSTEM_SIZE; ++i)
-    //     {
-    //         if(sizeof(filepath) > 56) {
-    //         std::cout << "FS::create failed, name too long." << std::endl;
-    //         return -1;
-    //         }
-    //         if(content.size() < BLOCK_SIZE || sizeOfContent < BLOCK_SIZE)
-    //         {
-    //             directory_table[i].first_blk = firstFreeFat;
-    //             directory_table[i].size = content.size();
-    //             directory_table[i].type = TYPE_FILE;
-    //             directory_table[i].access_rights = READ;
-    //             fat[firstFreeFat] = FAT_EOF;
-
-    //             writeFAT();
-    //             writeFAT_directory();
-    //             writeContentToDisk(firstFreeFat, tempBlock);
-    //             break;
-    //         }
-    //         if(content.size() > BLOCK_SIZE && sizeOfContent > BLOCK_SIZE) // how much bigger?? 2?? 3?? 4?? 11??
-    //         {
-    //             directory_table[i].first_blk = firstFreeFat;
-    //             directory_table[i].size = content.size();
-    //             directory_table[i].type = TYPE_FILE;
-    //             directory_table[i].access_rights = READ;
-
-    //             writeFAT();
-    //             writeFAT_directory();
-    //             writeContentToDisk(firstFreeFat, tempBlock);
-    //             break;
-    //             //i donno anymore... :d
-    //         }
-    //     }
-    
-    // }
-    
-    for(int i = 0; i < FILESYSTEM_SIZE; ++i){
-        if(directory_table[i].type == TYPE_FREE){
-            directory_table[i].first_blk = firstBlock;
-        }
-        // check if name is valid
-        if(sizeof(filepath) > 56) {
-            std::cout << "FS::create failed, name too long." << std::endl;
-            return -1;
-        }
-        strcpy(directory_table[i].file_name, filepath.c_str());
-
-        directory_table[i].size = content.size();
-        directory_table[i].type = TYPE_FILE;
-        directory_table[i].access_rights = READ;
-        break;
-    }
-
-    writeFAT();
-    writeFAT_directory();
-    disk.write(firstBlock, tempBlock);
-
-    return 0;
-}
-
-std::string
-FS::readContentFromDisk(int block, uint8_t* emptyBlock) {
-
-    std::string res;
-
-    while(block != FAT_EOF) {
-
-        disk.read(block, emptyBlock);
-        block = fat[block];
-    }
-
-    // vetifan
-    for(int i = 0; i < sizeof(emptyBlock); i++) {
-        res[i] = emptyBlock[i];
-    }
-    return res;
-}
-
->>>>>>> Stashed changes
 // retrieves the file from a path, "mainDir/subDir/file33" --> returns "file33"
 std::string FS::retrieveFilename(std::string path) {
     int pos = path.find_last_of('/');
@@ -241,23 +107,10 @@ uint16_t FS::findBlock(std::string filepath) {
         if(directory_table[i].file_name == filepath) {
             return directory_table[i].first_blk;
         }
-        else
-            return -1;
     }
 }
 
-<<<<<<< Updated upstream
 // #########
-=======
-// dir_entry* FS::readFromDirectory(int block = 0)
-// {
-//     uint8_t* dir = new uint8_t[BLOCK_SIZE];
-//     disk.read(block, dir);
-//     return (dir_entry*) dir;
-// }
-
-// ####### TASK 1 ########
->>>>>>> Stashed changes
 
 // create <filepath> creates a new file on the disk, the data content is
 // written on the following rows (ended with an empty row)
@@ -268,14 +121,9 @@ FS::create(std::string filepath)
 
     // input reads up to, but not including, the first whitespace!!!!
     std::string content;
-    content.clear();
     std::string input;
-<<<<<<< Updated upstream
     //char content[BLOCK_SIZE];
     content.clear();
-=======
-    uint8_t tempBlock[BLOCK_SIZE];
->>>>>>> Stashed changes
 
     while(std::getline(std::cin, input)) {
 
@@ -293,7 +141,6 @@ FS::create(std::string filepath)
     // search for a free slot in directory_table
     for(int j = 0; j < FILESYSTEM_SIZE; j++) {
 
-<<<<<<< Updated upstream
         if(directory_table[j].type == TYPE_FREE) 
         {
             directory_table[j].first_blk = firstFreeFat;
@@ -316,9 +163,6 @@ FS::create(std::string filepath)
     writeFAT_directory();
     std::cout << firstFreeFat << std::endl;
     writeContentToDisk(firstFreeFat, content);
-=======
-    writeContentToDisk(filepath, content, tempBlock);
->>>>>>> Stashed changes
 
     return 0;
 }
@@ -386,9 +230,14 @@ FS::ls()
     return 0;
 }
 
-// ########################
+// ##########
 
-// ######## TASK 2 ########
+// Vi kanske måste göra en funktion som splittar upp filepathsen för att
+// underlätta att hitta rätt beroende hur långa de är.
+
+// bara en fundering
+
+// ##########
 
 // cp <sourcefilepath> <destfilepath> makes an exact copy of the file
 // <sourcefilepath> to a new file <destfilepath>
@@ -396,37 +245,6 @@ int
 FS::cp(std::string sourcefilepath, std::string destfilepath)
 {
     std::cout << "FS::cp(" << sourcefilepath << "," << destfilepath << ")\n";
-<<<<<<< Updated upstream
-=======
-
-    std::string content;
-    content.clear();
-    std::string oldFileName = retrieveFilename(sourcefilepath);
-    std::string newFileName = retrieveFilename(destfilepath);
-    int block = findBlock(oldFileName);
-    int destBlock = findBlock(newFileName);
-
-    if(block != 0) {
-        std::cout << "File " << sourcefilepath << " does not exist." << std::endl;
-        return -1;
-    }
-    if(destBlock != -1) {
-        std::cout << "File " << destfilepath << " already exist." << std::endl;
-        return -1;
-    }
-
-    uint8_t emptyBlock[BLOCK_SIZE];
-
-    disk.read(block, emptyBlock);
-
-    for(int i = 0; i < sizeof(emptyBlock); i++)
-    {
-        content += emptyBlock[i];
-    }
-
-    writeContentToDisk(destfilepath, content, emptyBlock);
-
->>>>>>> Stashed changes
     return 0;
 }
 
@@ -436,28 +254,6 @@ int
 FS::mv(std::string sourcepath, std::string destpath)
 {
     std::cout << "FS::mv(" << sourcepath << "," << destpath << ")\n";
-<<<<<<< Updated upstream
-=======
-
-    // vetifan va för skit jag har skrivit här :8
-
-    for(int i = 0; i < FILESYSTEM_SIZE; i++) {
-        if(directory_table[i].file_name == sourcepath) {
-            for(int j = 0; j < FILESYSTEM_SIZE; j++) {
-                if(directory_table[j].file_name == destpath)
-                    if(directory_table[j].type == TYPE_FILE) // if it is a file, just rename it
-                        strcpy(directory_table[i].file_name, destpath.c_str());
-                    else if(directory_table[j].type == TYPE_DIR) // if it is a directory, move the file to the directory
-                        // to be continued
-                    return 0;
-                // else
-            }
-        }
-        else
-            std::cout << "File " << sourcepath << " does not exist.\n"; 
-    }
-
->>>>>>> Stashed changes
     return 0;
 }
 
@@ -465,13 +261,7 @@ FS::mv(std::string sourcepath, std::string destpath)
 int
 FS::rm(std::string filepath)
 {
-<<<<<<< Updated upstream
     // 
-=======
-    std::cout << "FS::rm(" << filepath << ")\n";
-
-    // man kanske måste göra en titt så accessrights stämmer
->>>>>>> Stashed changes
 
     for(int j = 0; j < FILESYSTEM_SIZE; j++) {
         if(directory_table[j].file_name == filepath) {
@@ -489,40 +279,8 @@ int
 FS::append(std::string filepath1, std::string filepath2)
 {
     std::cout << "FS::append(" << filepath1 << "," << filepath2 << ")\n";
-
-    int block1 = findBlock(filepath1);
-    int block2 = findBlock(filepath2);
-    uint8_t filepath1Content[BLOCK_SIZE];
-    uint8_t filepath2Content[BLOCK_SIZE];
-    uint8_t res[BLOCK_SIZE];
-
-    if(block1 != 0) {
-        std::cout << "File " << filepath1 << " does not exist." << std::endl;
-        return -1;
-    }
-    if(block2 != 0) {
-        std::cout << "File " << filepath2 << " does not exist." << std::endl;
-        return -1;
-    }
-
-    std::string content1 = readContentFromDisk(block1, filepath1Content);
-    std::string content2 = readContentFromDisk(block2, filepath2Content);
-    content2 += content1;
-
-    for(int j = 0; j < content2.size(); j++) {
-        res[j] = content2[j];
-    }
-
-    // här kanske man måste radera 'filepath2' genom rm(filepath2) och allokera den på nytt istället ????????
-
-    disk.write(block2, res);
-
     return 0;
 }
-
-// ########################
-
-// ######## TASK 3 ########
 
 // mkdir <dirpath> creates a new sub-directory with the name <dirpath>
 // in the current directory ---- kan göras
@@ -550,10 +308,6 @@ FS::pwd()
     return 0;
 }
 
-// ########################
-
-// ######## TASK 5 ########
-
 // chmod <accessrights> <filepath> changes the access rights for the
 // file <filepath> to <accessrights>. -- kan göras
 int
@@ -562,5 +316,3 @@ FS::chmod(std::string accessrights, std::string filepath)
     std::cout << "FS::chmod(" << accessrights << "," << filepath << ")\n";
     return 0;
 }
-
-// ########################
